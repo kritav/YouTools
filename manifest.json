@@ -9,6 +9,6 @@
   },
   "action": {
     "default_popup": "youtools.html",
-    "default_icon": "images/youtools-gray.png"
+    "default_icon": "images/youtools.png"
   }
 }
