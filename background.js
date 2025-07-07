@@ -5,7 +5,7 @@ const GRAYSCALE_ICON = "images/youtools-gray.png";
 function isYouTube(url) {
   try {
     const u = new URL(url);
-    return u.hostname === "www.youtube.com";
+    return u.hostname.includes("youtube.com");
   } catch (e) {
     return false;
   }
