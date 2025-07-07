@@ -1,5 +1,5 @@
-const YOUTUBE_ICON = "images/youtools-gray.png";
-const GRAYSCALE_ICON = "images/youtools.png";
+const YOUTUBE_ICON = "images/youtools.png";
+const GRAYSCALE_ICON = "images/youtools-gray.png";
 
 // Check if current URL is YouTube
 function isYouTube(url) {
