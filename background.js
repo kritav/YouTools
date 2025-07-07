@@ -14,7 +14,14 @@ function isYouTube(url) {
 // Update the extension icon
 function updateIcon(tabId, url) {
   const iconPath = isYouTube(url) ? YOUTUBE_ICON : GRAYSCALE_ICON;
-  chrome.action.setIcon({ tabId, path: iconPath });
+  chrome.action.setIcon(
+    { tabId, path: iconPath },
+    () => {
+      if (chrome.runtime.lastError) {
+        console.error(`Failed to set icon for tab ${tabId}:`, chrome.runtime.lastError.message);
+      }
+    }
+  );
 }
 
 // Tab update handler
@@ -27,7 +34,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 // Tab switching handler
 chrome.tabs.onActivated.addListener(activeInfo => {
   chrome.tabs.get(activeInfo.tabId, tab => {
-    if (tab.url) {
+    if (tab && tab.url) {
       updateIcon(activeInfo.tabId, tab.url);
     }
   });
