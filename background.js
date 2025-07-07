@@ -3,7 +3,12 @@ const GRAYSCALE_ICON = "youtools-gray.png";
 
 // Check if current URL is YouTube
 function isYouTube(url) {
-  return url && url.includes("youtube.com");
+  try {
+    const u = new URL(url);
+    return u.hostname === "www.youtube.com";
+  } catch (e) {
+    return false;
+  }
 }
 
 // Update the extension icon
