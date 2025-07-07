@@ -14,8 +14,12 @@ function isYouTube(url) {
 // Update the extension icon
 function updateIcon(tabId, url) {
   const iconPath = isYouTube(url) ? YOUTUBE_ICON : GRAYSCALE_ICON;
+
   chrome.action.setIcon(
-    { tabId, path: iconPath },
+    {
+      tabId,
+      path: { "16": iconPath } // ← This is the key fix!
+    },
     () => {
       if (chrome.runtime.lastError) {
         console.error(`Failed to set icon for tab ${tabId}:`, chrome.runtime.lastError.message);
