@@ -37,8 +37,8 @@ body {
   #logo-text {
     display: block;
     margin: 0 auto;
-    height: 128px;
-    width: 128px;
+    height: 210px;
+    width: 1000px;
     /* max-width: 100%; */
     /* max-height: 50px; */
     object-fit: contain;
