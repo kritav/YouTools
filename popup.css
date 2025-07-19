@@ -151,3 +151,40 @@ input[type="range"]::-moz-range-thumb {
 .icon-btn:hover {
   background-color: #c00;
 }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #eee;
+  border-radius: 5px;
+  width: 100%;
+  outline: none;
+  transition: background 0.3s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  background: #fff;
+  border: 2px solid #cc0000;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-top: -4px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  background: #fff;
+  border: 2px solid #cc0000;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: #eee;
+  border-radius: 5px;
+}
