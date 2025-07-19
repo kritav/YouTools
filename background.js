@@ -18,15 +18,10 @@ function updateIcon(tabId, url) {
       path: { "16": iconPath } 
     },
     () => {
-      if (chrome.runtime.lastError) {
-        console.error(
-          console.log("Current URL:", url);
-          console.log("Is YouTube:", isYouTube(url));
-          `Failed to set icon for tab ${tabId}:`,
-          chrome.runtime.lastError.message
-        );
-      }
+    if (chrome.runtime.lastError) {
+      console.error(`Failed to set icon for tab ${tabId}: ${chrome.runtime.lastError.message}`);
     }
+  }
   );
 }
 
