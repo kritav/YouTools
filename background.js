@@ -22,7 +22,7 @@ function updateIcon(tabId, url) {
       chrome.action.setIcon(
         {
           tabId,
-          path: { 16: iconPath }
+          path: { "16": iconPath }
         },
         () => {
           if (chrome.runtime.lastError) {
