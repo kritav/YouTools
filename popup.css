@@ -39,7 +39,6 @@ body {
     object-fit: contain;
   }
   
-  
   #logo.active {
     filter: none;
     box-shadow: 0 0 12px #cc0000;
