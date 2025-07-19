@@ -25,7 +25,6 @@ function updateIcon(tabId, url) {
   );
 }
 
-
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url) {
     updateIcon(tabId, tab.url);
