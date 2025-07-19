@@ -22,6 +22,7 @@ body {
     justify-content: center;
     gap: 10px;
     padding-bottom: 10px;
+    max-width: 100%;
   }
   
   #logo {
@@ -32,11 +33,12 @@ body {
   }
 
   #logo-text {
-    height: 50px;
-    width: 50px;
-    border-radius:10%;
+    width: 500px;
+    height: auto;
+    display: inline-block;
     object-fit: contain;
   }
+  
   
   #logo.active {
     filter: none;
