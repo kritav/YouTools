@@ -41,8 +41,8 @@ body {
   
   #logo.active {
     filter: none;
-    box-shadow: 0 0 12px #cc0000;
-    text-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+    box-shadow: 0 0 15px #cc0000;
+    text-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
     animation: glow 1s infinite alternate;
   }
   
