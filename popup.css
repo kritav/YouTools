@@ -29,8 +29,8 @@ body {
   }
 
   #logo-text {
+    width: 150px;
     height: auto;
-    width: auto;
     max-height: 50px;
     object-fit: contain;
   }
