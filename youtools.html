@@ -1,5 +1,169 @@
-<html>
-  <body>
-    <h1>YouTools</h1>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTools</title>
+  <style>
+    :root {
+      --yt-red: #FF0000;
+      --bg: #fff;
+      --radius: 8px;
+      --spacing: 12px;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: #000;
+      padding: var(--spacing);
+      width: 300px;
+    }
+    #logo {
+      display: block;
+      margin: 0 auto var(--spacing);
+      width: 80px;
+      height: 80px;
+      transition: filter 0.3s, box-shadow 0.3s;
+      border-radius: var(--radius);
+    }
+    .logo-active {
+      filter: none;
+      box-shadow: 0 0 8px var(--yt-red);
+    }
+    .control {
+      margin-bottom: var(--spacing);
+    }
+    .control label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    .control input[type="range"],
+    .control input[type="number"] {
+      width: 100%;
+      margin-bottom: 4px;
+      border-radius: var(--radius);
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: var(--spacing);
+      border: none;
+      border-radius: var(--radius);
+      background: var(--yt-red);
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: darken(var(--yt-red), 10%);
+    }
+  </style>
+</head>
+<body>
+  <img id="logo" src="images/youtools-large-gray.png" alt="YouTools Logo">
+
+  <div class="control">
+    <label for="speedRange">Playback Speed (0.01x - 100x)</label>
+    <input type="range" id="speedRange" min="0.01" max="100" step="0.01">
+    <input type="number" id="speedInput" min="0.01" max="100" step="0.01">
+  </div>
+
+  <div class="control">
+    <label for="volRange">Custom Volume</label>
+    <input type="range" id="volRange" min="0" max="100" step="1">
+    <input type="number" id="volInput" min="0" max="100" step="1">
+  </div>
+
+  <button id="detectBtn">Detect Video</button>
+  <button id="pipBtn">Activate Player-in-Player</button>
+
+  <script>
+    const logo = document.getElementById('logo');
+    const speedRange = document.getElementById('speedRange');
+    const speedInput = document.getElementById('speedInput');
+    const volRange = document.getElementById('volRange');
+    const volInput = document.getElementById('volInput');
+    const detectBtn = document.getElementById('detectBtn');
+    const pipBtn = document.getElementById('pipBtn');
+
+    // Initialize UI and storage
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Check if on YouTube
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && /youtube\.com|youtu\.be/.test(tab.url)) {
+        logo.src = 'images/youtools-large.png';
+        logo.classList.add('logo-active');
+      }
+
+      // Load saved settings
+      const { speed = 1, customVol = 50 } = await chrome.storage.local.get(['speed', 'customVol']);
+      speedRange.value = speed;
+      speedInput.value = speed;
+      volRange.value = customVol;
+      volInput.value = customVol;
+
+      applySpeed(speed);
+      applyCustomVol(customVol);
+    });
+
+    // Helpers to send messages
+    function applySpeed(value) {
+      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'setSpeed', value: parseFloat(value) });
+      });
+    }
+    function applyCustomVol(value) {
+      chrome.storage.local.set({ customVol: value });
+    }
+
+    // Sync range and number inputs for speed
+    speedRange.addEventListener('input', () => {
+      const val = speedRange.value;
+      speedInput.value = val;
+      chrome.storage.local.set({ speed: val });
+      applySpeed(val);
+    });
+    speedInput.addEventListener('change', () => {
+      let val = parseFloat(speedInput.value);
+      if (isNaN(val) || val < 0.01) val = 0.01;
+      if (val > 100) val = 100;
+      speedRange.value = val;
+      speedInput.value = val;
+      chrome.storage.local.set({ speed: val });
+      applySpeed(val);
+    });
+
+    // Sync custom volume
+    volRange.addEventListener('input', () => {
+      const val = volRange.value;
+      volInput.value = val;
+      applyCustomVol(val);
+    });
+    volInput.addEventListener('change', () => {
+      let val = parseInt(volInput.value, 10);
+      if (isNaN(val) || val < 0) val = 0;
+      if (val > 100) val = 100;
+      volRange.value = val;
+      volInput.value = val;
+      applyCustomVol(val);
+    });
+
+    // Detect Video button
+    detectBtn.addEventListener('click', () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'detectVideo' });
+      });
+    });
+
+    // Player-in-Player button
+    pipBtn.addEventListener('click', () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'activatePIP' });
+      });
+    });
+  </script>
+</body>
 </html>
