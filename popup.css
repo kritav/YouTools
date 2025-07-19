@@ -33,7 +33,7 @@ body {
   }
 
   #logo-text {
-    width: 500px;
+    width: 200px;
     height: auto;
     display: inline-block;
     object-fit: contain;
