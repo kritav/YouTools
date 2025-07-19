@@ -1,6 +1,12 @@
 const YOUTUBE_ICON = "images/youtools.png";
 const GRAYSCALE_ICON = "images/youtools-gray.png";
 
+const speedInput = document.getElementById("speed-input");
+const speedSlider = document.getElementById("speed-slider");
+const volumeInput = document.getElementById("volume-input");
+const volumeSlider = document.getElementById("volume-slider");
+
+
 function isYouTube(url) {
   try {
     const u = new URL(url);
@@ -37,4 +43,25 @@ chrome.tabs.onActivated.addListener(activeInfo => {
       updateIcon(activeInfo.tabId, tab.url);
     }
   });
+});
+
+speedInput.addEventListener("input", () => {
+  let val = Math.min(Math.max(parseFloat(speedInput.value), 0.01), 100);
+  speedInput.value = val;
+  speedSlider.value = val;
+});
+
+speedSlider.addEventListener("input", () => {
+  speedInput.value = speedSlider.value;
+});
+
+
+volumeInput.addEventListener("input", () => {
+  let val = Math.min(Math.max(parseInt(volumeInput.value), 0), 100);
+  volumeInput.value = val;
+  volumeSlider.value = val;
+});
+
+volumeSlider.addEventListener("input", () => {
+  volumeInput.value = volumeSlider.value;
 });
