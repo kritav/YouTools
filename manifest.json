@@ -3,7 +3,15 @@
   "description": "Extension for YouTube",
   "version": "1.0",
   "manifest_version": 3,
-  "permissions": ["tabs"],
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },

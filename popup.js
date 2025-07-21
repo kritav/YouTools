@@ -2,95 +2,133 @@ const speedSlider = document.getElementById("speed-slider");
 const speedInput = document.getElementById("speed-input");
 const volumeSlider = document.getElementById("volume-slider");
 const volumeInput = document.getElementById("volume-input");
-const pipButton = document.getElementById("pip-button");
+const pipButton = document.querySelector(".icon-btn[title='Picture in Picture']");
+const muteButton = document.querySelector(".icon-btn[title='Mute/Unmute']");
 const logo = document.getElementById("logo");
 
 const STORAGE_KEYS = {
   speed: "youtools_speed",
   volume: "youtools_volume",
-  pipEnabled: "youtools_pip_enabled"
+  muted: "youtools_muted"
 };
 
-// GET values from storage so you don't have to reset your settings each time :P
+// Initialize controls when popup opens
 document.addEventListener("DOMContentLoaded", async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const url = tab.url || "";
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const url = tab?.url || "";
 
-  // Change logo if the person is on YT
-  if (url.includes("youtube.com") || url.includes("youtu.be")) {
-    logo.classList.add("active");
+    if (url.includes("youtube.com") || url.includes("youtu.be")) {
+      logo.classList.add("active");
+    }
+
+    // Get saved values
+    chrome.storage.local.get(STORAGE_KEYS, (data) => {
+      const savedSpeed = data[STORAGE_KEYS.speed] || 1.0;
+      const savedVolume = data[STORAGE_KEYS.volume] || 100;
+      
+      speedSlider.value = savedSpeed;
+      speedInput.value = savedSpeed;
+      volumeSlider.value = savedVolume;
+      volumeInput.value = savedVolume;
+
+      // Apply saved values to video
+      updateVideoProperty("playbackRate", savedSpeed);
+      updateVideoProperty("volume", savedVolume / 100);
+    });
+  } catch (error) {
+    console.error("Error initializing controls:", error);
   }
-
-  chrome.storage.local.get(STORAGE_KEYS, (data) => {
-    const savedSpeed = data[STORAGE_KEYS.speed] || 1.0;
-    const savedVolume = data[STORAGE_KEYS.volume] || 1.0;
-
-    speedSlider.value = savedSpeed;
-    speedInput.value = savedSpeed;
-    volumeSlider.value = savedVolume;
-    volumeInput.value = savedVolume;
-  });
 });
 
-// video speed slider 
+// Speed control
 speedSlider.addEventListener("input", () => {
-  speedInput.value = speedSlider.value;
-  chrome.storage.local.set({ [STORAGE_KEYS.speed]: parseFloat(speedSlider.value) });
-  updateVideoProperty("playbackRate", parseFloat(speedSlider.value));
+  const value = parseFloat(speedSlider.value);
+  speedInput.value = value;
+  chrome.storage.local.set({ [STORAGE_KEYS.speed]: value });
+  updateVideoProperty("playbackRate", value);
 });
 
 speedInput.addEventListener("change", () => {
-  const value = Math.max(0.01, Math.min(100, parseFloat(speedInput.value)));
+  let value = parseFloat(speedInput.value);
+  value = Math.max(0.01, Math.min(100, value));
   speedSlider.value = value;
   speedInput.value = value;
   chrome.storage.local.set({ [STORAGE_KEYS.speed]: value });
   updateVideoProperty("playbackRate", value);
 });
 
-// Volume slider control
-volumeSlider.addEventListener("input", function() {
-    const value = parseFloat(this.value);
-    volumeInput.value = value;
+// Volume control
+volumeSlider.addEventListener("input", () => {
+  const value = parseFloat(volumeSlider.value);
+  volumeInput.value = value;
+  chrome.storage.local.set({ [STORAGE_KEYS.volume]: value });
+  updateVideoProperty("volume", value / 100);
 });
 
-// Volume input control
-volumeInput.addEventListener("change", function() {
-    let value = parseFloat(this.value);
-    
-    // Clamp value between min and max
-    value = Math.max(0, Math.min(100, value));
-    
-    // Handle NaN cases
-    if (isNaN(value)) value = 0;
-    
-    // Update both elements
-    volumeSlider.value = value;
-    volumeInput.value = value;
+volumeInput.addEventListener("change", () => {
+  let value = parseFloat(volumeInput.value);
+  value = Math.max(0, Math.min(100, value));
+  if (isNaN(value)) value = 100;
+  volumeSlider.value = value;
+  volumeInput.value = value;
+  chrome.storage.local.set({ [STORAGE_KEYS.volume]: value });
+  updateVideoProperty("volume", value / 100);
 });
 
-// Picture-in-picture so you don't have to right click the video twice to do that
-pipButton.addEventListener("click", () => {
-  chrome.scripting.executeScript({
-    target: { tabId: chrome.tabs.TAB_ID_CURRENT },
-    func: () => {
-      const video = document.querySelector("video");
-      if (video && document.pictureInPictureEnabled) {
-        video.requestPictureInPicture().catch(console.error);
+// Picture-in-Picture button
+pipButton?.addEventListener("click", async () => {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      function: () => {
+        const video = document.querySelector("video");
+        if (video && document.pictureInPictureEnabled) {
+          if (document.pictureInPictureElement) {
+            document.exitPictureInPicture();
+          } else {
+            video.requestPictureInPicture();
+          }
+        }
       }
-    }
-  });
-
-  chrome.storage.local.set({ [STORAGE_KEYS.pipEnabled]: true });
+    });
+  } catch (error) {
+    console.error("PiP error:", error);
+  }
 });
 
-// Inject script into the current YouTube tab
-function updateVideoProperty(prop, value) {
-  chrome.scripting.executeScript({
-    target: { tabId: chrome.tabs.TAB_ID_CURRENT },
-    func: (property, val) => {
-      const video = document.querySelector("video");
-      if (video) video[property] = val;
-    },
-    args: [prop, value]
-  });
+// Mute button
+muteButton?.addEventListener("click", async () => {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      function: () => {
+        const video = document.querySelector("video");
+        if (video) {
+          video.muted = !video.muted;
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Mute error:", error);
+  }
+});
+
+// Helper function to update video properties
+async function updateVideoProperty(prop, value) {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      function: (property, val) => {
+        const video = document.querySelector("video");
+        if (video) video[property] = val;
+      },
+      args: [prop, value]
+    });
+  } catch (error) {
+    console.error(`Error updating ${prop}:`, error);
+  }
 }
