@@ -48,19 +48,22 @@ speedInput.addEventListener("change", () => {
 });
 
 // Volume slider control
-volumeSlider.addEventListener("input", () => {
-    volumeInput.value = volumeSlider.value;
+volumeSlider.addEventListener("input", function() {
+    const value = parseFloat(this.value);
+    volumeInput.value = value;
 });
 
 // Volume input control
-volumeInput.addEventListener("input", () => {
-    let value = parseFloat(volumeInput.value);
+volumeInput.addEventListener("change", function() {
+    let value = parseFloat(this.value);
     
-    // Clamp the value between 0 and 100
-    if (value > 100) value = 100;
-    if (value < 0) value = 0;
+    // Clamp value between min and max
+    value = Math.max(0, Math.min(100, value));
+    
+    // Handle NaN cases
     if (isNaN(value)) value = 0;
     
+    // Update both elements
     volumeSlider.value = value;
     volumeInput.value = value;
 });
