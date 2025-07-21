@@ -6,26 +6,34 @@ const pipButton = document.querySelector(".icon-btn[title='Picture in Picture']"
 const muteButton = document.querySelector(".icon-btn[title='Mute/Unmute']");
 const logo = document.getElementById("logo");
 
-const STORAGE_KEYS = {
-  speed: "youtools_speed",
-  volume: "youtools_volume",
-  muted: "youtools_muted"
-};
+// Function to get storage keys for specific tab
+function getStorageKeys(tabId) {
+  return {
+    speed: `youtools_speed_${tabId}`,
+    volume: `youtools_volume_${tabId}`,
+    muted: `youtools_muted_${tabId}`
+  };
+}
 
 // Initialize controls when popup opens
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     const url = tab?.url || "";
+    const tabId = tab?.id;
 
     if (url.includes("youtube.com") || url.includes("youtu.be")) {
       logo.classList.add("active");
     }
 
-    // Get saved values
-    chrome.storage.local.get(STORAGE_KEYS, (data) => {
-      const savedSpeed = data[STORAGE_KEYS.speed] || 1.0;
-      const savedVolume = data[STORAGE_KEYS.volume] || 100;
+    if (!tabId) return;
+
+    const storageKeys = getStorageKeys(tabId);
+
+    // Get saved values for this specific tab
+    chrome.storage.local.get(storageKeys, (data) => {
+      const savedSpeed = data[storageKeys.speed] || 1.0;
+      const savedVolume = data[storageKeys.volume] || 100;
       
       speedSlider.value = savedSpeed;
       speedInput.value = savedSpeed;
@@ -42,39 +50,49 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // Speed control
-speedSlider.addEventListener("input", () => {
+speedSlider.addEventListener("input", async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const value = parseFloat(speedSlider.value);
   speedInput.value = value;
-  chrome.storage.local.set({ [STORAGE_KEYS.speed]: value });
+  const storageKeys = getStorageKeys(tab.id);
+  chrome.storage.local.set({ [storageKeys.speed]: value });
   updateVideoProperty("playbackRate", value);
 });
 
-speedInput.addEventListener("change", () => {
+speedInput.addEventListener("change", async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   let value = parseFloat(speedInput.value);
   value = Math.max(0.01, Math.min(100, value));
   speedSlider.value = value;
   speedInput.value = value;
-  chrome.storage.local.set({ [STORAGE_KEYS.speed]: value });
+  const storageKeys = getStorageKeys(tab.id);
+  chrome.storage.local.set({ [storageKeys.speed]: value });
   updateVideoProperty("playbackRate", value);
 });
 
 // Volume control
-volumeSlider.addEventListener("input", () => {
+volumeSlider.addEventListener("input", async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const value = parseFloat(volumeSlider.value);
   volumeInput.value = value;
-  chrome.storage.local.set({ [STORAGE_KEYS.volume]: value });
+  const storageKeys = getStorageKeys(tab.id);
+  chrome.storage.local.set({ [storageKeys.volume]: value });
   updateVideoProperty("volume", value / 100);
 });
 
-volumeInput.addEventListener("change", () => {
+volumeInput.addEventListener("change", async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   let value = parseFloat(volumeInput.value);
   value = Math.max(0, Math.min(100, value));
   if (isNaN(value)) value = 100;
   volumeSlider.value = value;
   volumeInput.value = value;
-  chrome.storage.local.set({ [STORAGE_KEYS.volume]: value });
+  const storageKeys = getStorageKeys(tab.id);
+  chrome.storage.local.set({ [storageKeys.volume]: value });
   updateVideoProperty("volume", value / 100);
 });
+
+// Rest of the code remains the same...
 
 // Picture-in-Picture button
 pipButton?.addEventListener("click", async () => {
