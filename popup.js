@@ -1,6 +1,7 @@
 const speedSlider = document.getElementById("speed-slider");
 const speedInput = document.getElementById("speed-input");
 const volumeSlider = document.getElementById("volume-slider");
+const volumeInput = document.getElementById("volume-input");
 const pipButton = document.getElementById("pip-button");
 const logo = document.getElementById("logo");
 
@@ -27,6 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     speedSlider.value = savedSpeed;
     speedInput.value = savedSpeed;
     volumeSlider.value = savedVolume;
+    volumeInput.value = savedVolume;
   });
 });
 
@@ -45,9 +47,22 @@ speedInput.addEventListener("change", () => {
   updateVideoProperty("playbackRate", value);
 });
 
-// Volume slider (sometimes the volume on youtube + your device is still too loud even at lowest settings so this third option helps)
-volumeSlider.addEventListener("input", () => {
-  chrome.storage.local.set({ [STORAGE_KEYS.volume]: parseFloat(volumeSlider.value) });
+// Volume control elements
+volumeInput.addEventListener('input', function() {
+    let value = parseFloat(this.value);
+    
+    // Clamp value between min and max
+    if (value > 100) value = 100;
+    if (value < 0) value = 0;
+    
+    // Update both input and slider
+    volumeInput.value = value;
+    volumeSlider.value = value;
+});
+
+// Sync volume slider with input
+volumeSlider.addEventListener('input', function() {
+    volumeInput.value = this.value;
 });
 
 // Picture-in-picture so you don't have to right click the video twice to do that
