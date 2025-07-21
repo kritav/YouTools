@@ -15,6 +15,28 @@ function getStorageKeys(tabId) {
   };
 }
 
+// Add this helper function at the top
+async function getCurrentVideoProperties(tabId) {
+  try {
+    const result = await chrome.scripting.executeScript({
+      target: { tabId },
+      function: () => {
+        const video = document.querySelector('video');
+        if (!video) return null;
+        return {
+          speed: video.playbackRate,
+          volume: Math.round(video.volume * 100),
+          muted: video.muted
+        };
+      }
+    });
+    return result[0].result;
+  } catch (error) {
+    console.error('Error getting video properties:', error);
+    return null;
+  }
+}
+
 // Initialize controls when popup opens
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -29,29 +51,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const storageKeys = getStorageKeys(tabId);
+    
+    // Get both stored values and current video state
+    const [videoProps, storedData] = await Promise.all([
+      getCurrentVideoProperties(tabId),
+      new Promise(resolve => chrome.storage.local.get(storageKeys, resolve))
+    ]);
 
-    // Get saved values for this specific tab
-    await new Promise((resolve) => {
-      chrome.storage.local.get(storageKeys, (data) => {
-        // Use null coalescing to handle undefined values
-        const savedSpeed = data[storageKeys.speed] ?? 1.0;
-        const savedVolume = data[storageKeys.volume] ?? 100;
-        const savedMuted = data[storageKeys.muted] ?? false;
-        
-        // Update UI
-        speedSlider.value = savedSpeed;
-        speedInput.value = savedSpeed;
-        volumeSlider.value = savedVolume;
-        volumeInput.value = savedVolume;
+    // Use current video values as primary source, fall back to stored values, then defaults
+    const currentSpeed = videoProps?.speed ?? storedData[storageKeys.speed] ?? 1.0;
+    const currentVolume = videoProps?.volume ?? storedData[storageKeys.volume] ?? 100;
+    const currentMuted = videoProps?.muted ?? storedData[storageKeys.muted] ?? false;
 
-        // Apply saved values to video
-        updateVideoProperty("playbackRate", savedSpeed);
-        updateVideoProperty("volume", savedVolume / 100);
-        updateVideoProperty("muted", savedMuted);
+    // Update UI
+    speedSlider.value = currentSpeed;
+    speedInput.value = currentSpeed;
+    volumeSlider.value = currentVolume;
+    volumeInput.value = currentVolume;
 
-        resolve();
-      });
+    // Store current values
+    chrome.storage.local.set({
+      [storageKeys.speed]: currentSpeed,
+      [storageKeys.volume]: currentVolume,
+      [storageKeys.muted]: currentMuted
     });
+
   } catch (error) {
     console.error("Error initializing controls:", error);
   }
