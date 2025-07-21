@@ -49,19 +49,20 @@ speedInput.addEventListener("change", () => {
 
 // Volume slider control
 volumeSlider.addEventListener("input", () => {
-  const value = parseFloat(volumeSlider.value) / 100; // Convert to 0-1 range for video volume
-  volumeInput.value = volumeSlider.value; // Keep input in 0-100 range for display
-  chrome.storage.local.set({ [STORAGE_KEYS.volume]: value });
-  updateVideoProperty("volume", value);
+    volumeInput.value = volumeSlider.value;
 });
 
 // Volume input control
-volumeInput.addEventListener("change", () => {
-  let value = Math.max(0, Math.min(100, parseFloat(volumeInput.value)));
-  volumeSlider.value = value;
-  volumeInput.value = value;
-  chrome.storage.local.set({ [STORAGE_KEYS.volume]: value / 100 }); // Convert to 0-1 range for storage
-  updateVideoProperty("volume", value / 100);
+volumeInput.addEventListener("input", () => {
+    let value = parseFloat(volumeInput.value);
+    
+    // Clamp the value between 0 and 100
+    if (value > 100) value = 100;
+    if (value < 0) value = 0;
+    if (isNaN(value)) value = 0;
+    
+    volumeSlider.value = value;
+    volumeInput.value = value;
 });
 
 // Picture-in-picture so you don't have to right click the video twice to do that
