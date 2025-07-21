@@ -15,7 +15,7 @@ function getStorageKeys(tabId) {
   };
 }
 
-// Add this helper function at the top
+// Helper function 
 async function getCurrentVideoProperties(tabId) {
   try {
     const result = await chrome.scripting.executeScript({
@@ -94,7 +94,7 @@ speedSlider.addEventListener("input", async () => {
 speedInput.addEventListener("change", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   let value = parseFloat(speedInput.value);
-  value = Math.max(0.01, Math.min(100, value));
+  value = Math.max(0.1, Math.min(10, value));
   speedSlider.value = value;
   speedInput.value = value;
   const storageKeys = getStorageKeys(tab.id);
