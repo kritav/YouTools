@@ -67,7 +67,7 @@ volumeSlider.addEventListener("input", () => {
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  // Clean up stored settings for this tab
+  // get rid of stored values for this tab
   const storageKeys = [
     `youtools_speed_${tabId}`,
     `youtools_volume_${tabId}`,

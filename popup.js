@@ -32,7 +32,8 @@ async function getCurrentVideoProperties(tabId) {
     });
     return result[0].result;
   } catch (error) {
-    console.error('Error getting video properties:', error);
+    console.error('Error getting video properties:', error); //WHY DOESNT THIS WORK
+    //AHWREUgreq9phrguihja9quhr9uioshaoghhagiohagh
     return null;
   }
 }
