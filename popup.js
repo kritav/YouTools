@@ -22,27 +22,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     const url = tab?.url || "";
     const tabId = tab?.id;
 
+    if (!tabId) return;
+
     if (url.includes("youtube.com") || url.includes("youtu.be")) {
       logo.classList.add("active");
     }
 
-    if (!tabId) return;
-
     const storageKeys = getStorageKeys(tabId);
 
     // Get saved values for this specific tab
-    chrome.storage.local.get(storageKeys, (data) => {
-      const savedSpeed = data[storageKeys.speed] || 1.0;
-      const savedVolume = data[storageKeys.volume] || 100;
-      
-      speedSlider.value = savedSpeed;
-      speedInput.value = savedSpeed;
-      volumeSlider.value = savedVolume;
-      volumeInput.value = savedVolume;
+    await new Promise((resolve) => {
+      chrome.storage.local.get(storageKeys, (data) => {
+        // Use null coalescing to handle undefined values
+        const savedSpeed = data[storageKeys.speed] ?? 1.0;
+        const savedVolume = data[storageKeys.volume] ?? 100;
+        const savedMuted = data[storageKeys.muted] ?? false;
+        
+        // Update UI
+        speedSlider.value = savedSpeed;
+        speedInput.value = savedSpeed;
+        volumeSlider.value = savedVolume;
+        volumeInput.value = savedVolume;
 
-      // Apply saved values to video
-      updateVideoProperty("playbackRate", savedSpeed);
-      updateVideoProperty("volume", savedVolume / 100);
+        // Apply saved values to video
+        updateVideoProperty("playbackRate", savedSpeed);
+        updateVideoProperty("volume", savedVolume / 100);
+        updateVideoProperty("muted", savedMuted);
+
+        resolve();
+      });
     });
   } catch (error) {
     console.error("Error initializing controls:", error);
@@ -92,8 +100,6 @@ volumeInput.addEventListener("change", async () => {
   updateVideoProperty("volume", value / 100);
 });
 
-// Rest of the code remains the same...
-
 // Picture-in-Picture button
 pipButton?.addEventListener("click", async () => {
   try {
@@ -138,11 +144,15 @@ muteButton?.addEventListener("click", async () => {
 async function updateVideoProperty(prop, value) {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    chrome.scripting.executeScript({
+    await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       function: (property, val) => {
         const video = document.querySelector("video");
-        if (video) video[property] = val;
+        if (video) {
+          video[property] = val;
+          return video[property]; // Return the actual set value
+        }
+        return null;
       },
       args: [prop, value]
     });
