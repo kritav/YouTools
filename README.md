@@ -13,7 +13,7 @@
 - Change video volume from 0 to 100. (percent)
 
 **Picture-in-Picture:**
-- Activate picture in picture with one button press.
+- Activate picture-in-picture with one button press.
 
 **Mute:** 
 - Mute button separate from Youtube's player; mutes just the current tab.
