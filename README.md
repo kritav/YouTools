@@ -16,7 +16,7 @@
 - Activate picture-in-picture with one button press.
 
 **Mute:** 
-- Mute button separate from Youtube's player; mutes just the current tab.
+- Mute button separate from YouTube's player; mutes just the current tab.
 
 **TODO:**
 - Saved controls for different youtube channels? 
