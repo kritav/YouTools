@@ -1,8 +1,8 @@
 {
-  "name": "YouTools",
-  "description": "Extension for YouTube",
-  "version": "1.0",
   "manifest_version": 3,
+  "name": "YouTools",
+  "version": "1.0",
+  "description": "Extension for YouTube",
   "permissions": [
     "tabs",
     "activeTab",
@@ -14,7 +14,8 @@
     "*://*.youtu.be/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "action": {
     "default_popup": "youtools.html",
