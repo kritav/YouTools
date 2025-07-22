@@ -18,6 +18,8 @@ function isYouTube(url) {
 
 function updateIcon(tabId, url) {
   const iconPath = isYouTube(url) ? YOUTUBE_ICON : GRAYSCALE_ICON;
+  //Debugging output Below
+  console.log(`The current url ${isYouTube(url) ? "IS" : "IS NOT"} a YouTube URL: ${url}`);
   chrome.action.setIcon(
     {
       tabId: tabId,
