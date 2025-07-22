@@ -34,6 +34,8 @@ async function getCurrentVideoProperties(tabId) {
   } catch (error) {
     console.error('Error getting video properties:', error); //WHY DOESNT THIS WORK
     //AHWREUgreq9phrguihja9quhr9uioshaoghhagiohagh
+    //This is likely because the user is not on youtube (or any page without a video element)
+    //not necessarily an error
     return null;
   }
 }
