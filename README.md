@@ -10,7 +10,7 @@
 - Change video speed from 0.1x to 10x.
 
 **Volume Control:** 
-- Change video volume from 0 to 100.
+- Change video volume from 0 to 100. (percent)
 
 **Picture-in-Picture:**
 - Activate picture in picture with one button press.
