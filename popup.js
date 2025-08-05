@@ -40,6 +40,11 @@ async function getCurrentVideoProperties(tabId) {
   }
 }
 
+//event listener for analytics click
+document.getElementById('statsButton')?.addEventListener('click', () => {
+    chrome.tabs.create({ url: 'analytics.html' });
+});
+
 // Initialize controls when popup opens
 document.addEventListener("DOMContentLoaded", async () => {
   try {
