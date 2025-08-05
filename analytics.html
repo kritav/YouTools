@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTools Analytics</title>
+  <link rel="stylesheet" href="analytics.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="analytics-container">
+    <div class="header">
+      <img src="images/youtools.png" alt="YouTools Logo" class="analytics-logo">
+      <h1>Your YouTube Stats</h1>
+    </div>
+
+    <div class="time-selector">
+      <button data-period="day" class="active">Today</button>
+      <button data-period="week">This Week</button>
+      <button data-period="month">This Month</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Watch Time</h3>
+        <div id="totalWatchTime">0 min</div>
+      </div>
+      <div class="stat-card">
+        <h3>Videos Watched</h3>
+        <div id="videoCount">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Average Speed</h3>
+        <div id="avgSpeed">1.0x</div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <h3>Watch Time by Category</h3>
+      <canvas id="categoryChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <h3>Daily Watch Time</h3>
+      <canvas id="timelineChart"></canvas>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="analytics.js"></script>
+</body>
+</html>

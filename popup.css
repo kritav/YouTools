@@ -98,62 +98,6 @@ input[type="number"] {
 
 input[type="range"] {
   -webkit-appearance: none;
-  height: 6px;
-  background: #eee;
-  border-radius: 5px;
-  width: 100%;
-  outline: none;
-  margin-top: 6px;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 14px;
-  width: 14px;
-  background: red;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-input[type="range"]::-moz-range-thumb {
-  height: 14px;
-  width: 14px;
-  background: red;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.icon-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.icon-btn {
-  width: 40px;
-  height: 40px;
-  background-color: #e00;
-  border: none;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.icon-btn img {
-  width: 24px;
-  height: 24px;
-  filter: invert(1);
-}
-
-.icon-btn:hover {
-  background-color: #c00;
-}
-
-input[type="range"] {
-  -webkit-appearance: none;
   appearance: none;
   height: 6px;
   background: #eee;
@@ -187,4 +131,53 @@ input[type="range"]::-moz-range-track {
   height: 6px;
   background: #eee;
   border-radius: 5px;
+}
+
+.icon-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  background-color: #e00;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.icon-btn img {
+  width: 24px;
+  height: 24px;
+  filter: invert(1);
+}
+
+.icon-btn:hover {
+  background-color: #c00;
+}
+
+.analytics-button {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.analytics-button button {
+  padding: 8px 16px;
+  background: #cc0000;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.analytics-button button:hover {
+  background: #990000;
 }

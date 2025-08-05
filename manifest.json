@@ -7,18 +7,19 @@
     "tabs",
     "activeTab",
     "storage",
-    "scripting"
+    "scripting",
+    "alarms"
   ],
   "host_permissions": [
     "*://*.youtube.com/*",
     "*://*.youtu.be/*"
   ],
-  "background": {
-    "service_worker": "background.js",
-    "type": "module"
-  },
   "action": {
     "default_popup": "youtools.html",
     "default_icon": "images/youtools-gray.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
   }
 }

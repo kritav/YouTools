@@ -22,4 +22,4 @@
 - Saved controls for different youtube channels? 
   - (volume & speed)
 - Hotkeys/shortcuts to activate features?
-- Youtube time manager?
+- Youtube time manager? 

@@ -112,13 +112,13 @@ volumeSlider.addEventListener("input", async () => {
   volumeInput.value = value;
   const storageKeys = getStorageKeys(tab.id);
   chrome.storage.local.set({ [storageKeys.volume]: value });
-  updateVideoProperty("volume", value / 100);
+  updateVideoProperty("volume", value / 100); 
 });
 
 volumeInput.addEventListener("change", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   let value = parseFloat(volumeInput.value);
-  value = Math.max(0, Math.min(100, value));
+  value = Math.max(0, Math.min(200, value));
   if (isNaN(value)) value = 100;
   volumeSlider.value = value;
   volumeInput.value = value;
@@ -182,7 +182,7 @@ async function updateVideoProperty(prop, value) {
         return null;
       },
       args: [prop, value]
-    });
+    });I
   } catch (error) {
     console.error(`Error updating ${prop}:`, error);
   }
