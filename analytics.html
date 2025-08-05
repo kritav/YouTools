@@ -18,12 +18,17 @@
       <button data-period="day" class="active">Today</button>
       <button data-period="week">This Week</button>
       <button data-period="month">This Month</button>
+      <button data-period="year">This Year</button>
     </div>
 
     <div class="stats-grid">
       <div class="stat-card">
         <h3>Watch Time</h3>
         <div id="totalWatchTime">0 min</div>
+      </div>
+      <div class="stat-card">
+        <h3>Time Saved</h3>
+        <div id="timeSaved">0 min</div>
       </div>
       <div class="stat-card">
         <h3>Videos Watched</h3>
@@ -36,8 +41,12 @@
     </div>
 
     <div class="chart-container">
-      <h3>Watch Time by Category</h3>
-      <canvas id="categoryChart"></canvas>
+      <h3>Watch Time by Channel</h3>
+      <div class="sort-buttons">
+        <button data-sort="watchTime" class="active">By Watch Time</button>
+        <button data-sort="videoCount">By Video Count</button>
+      </div>
+      <canvas id="channelChart"></canvas>
     </div>
 
     <div class="chart-container">

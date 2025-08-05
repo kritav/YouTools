@@ -6,9 +6,11 @@ const ANALYTICS_KEYS = {
 };
 
 let currentPeriod = 'day';
+let currentSort = 'watchTime';
 
 document.addEventListener('DOMContentLoaded', () => {
   initializeTimeSelector();
+  initializeSortButtons();
   loadAnalytics(currentPeriod);
 });
 
@@ -19,6 +21,18 @@ function initializeTimeSelector() {
       buttons.forEach(b => b.classList.remove('active'));
       button.classList.add('active');
       currentPeriod = button.dataset.period;
+      loadAnalytics(currentPeriod);
+    });
+  });
+}
+
+function initializeSortButtons() {
+  const buttons = document.querySelectorAll('.sort-buttons button');
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+      currentSort = button.dataset.sort;
       loadAnalytics(currentPeriod);
     });
   });
@@ -63,6 +77,8 @@ function getStartDate(now, period) {
       return new Date(now.setDate(now.getDate() - 7));
     case 'month':
       return new Date(now.setMonth(now.getMonth() - 1));
+    case 'year':
+      return new Date(now.setFullYear(now.getFullYear() - 1));
     default:
       return new Date(0);
   }
@@ -70,11 +86,14 @@ function getStartDate(now, period) {
 
 function updateStats(data) {
   const totalWatchTime = calculateTotalWatchTime(data.watchHistory);
+  const timeSaved = calculateTimeSaved(data.watchHistory);
   const videoCount = data.watchHistory.length;
   const avgSpeed = calculateAverageSpeed(data.watchHistory);
 
   document.getElementById('totalWatchTime').textContent = 
-    `${Math.round(totalWatchTime / 60)} min`;
+    `${formatTime(totalWatchTime)}`;
+  document.getElementById('timeSaved').textContent = 
+    `${formatTime(timeSaved)}`;
   document.getElementById('videoCount').textContent = videoCount;
   document.getElementById('avgSpeed').textContent = 
     `${avgSpeed.toFixed(1)}x`;
@@ -83,6 +102,7 @@ function updateStats(data) {
 function updateCharts(data) {
   updateCategoryChart(data.categories);
   updateTimelineChart(data.dailyStats);
+  updateChannelChart(data);
 }
 
 function updateCategoryChart(categories) {
@@ -140,6 +160,38 @@ function updateTimelineChart(dailyStats) {
   });
 }
 
+function updateChannelChart(data) {
+  const ctx = document.getElementById('channelChart');
+  const channelData = Object.entries(data.channelStats || {})
+    .sort((a, b) => b[1][currentSort] - a[1][currentSort])
+    .slice(0, 10); // Show top 10 channels
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: channelData.map(([channel]) => channel),
+      datasets: [{
+        label: currentSort === 'watchTime' ? 'Watch Time (min)' : 'Videos Watched',
+        data: channelData.map(([, stats]) => 
+          currentSort === 'watchTime' ? 
+          Math.round(stats.watchTime / 60) : 
+          stats.videoCount
+        ),
+        backgroundColor: '#cc0000'
+      }]
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
+}
+
 function generateColors(count) {
   return Array.from({ length: count }, (_, i) => 
     `hsl(${(i * 360) / count}, 70%, 50%)`);
@@ -153,4 +205,18 @@ function calculateAverageSpeed(history) {
   if (history.length === 0) return 1.0;
   const totalSpeed = history.reduce((sum, entry) => sum + (entry.speed || 1), 0);
   return totalSpeed / history.length;
+}
+
+// Add time formatting function
+function formatTime(seconds) {
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
+  return `${Math.round(seconds / 86400)}d`;
+}
+
+// Add function to calculate time saved
+function calculateTimeSaved(history) {
+  return history.reduce((total, entry) => 
+    total + (entry.timeSaved || 0), 0);
 }

@@ -86,3 +86,24 @@ body {
   margin: 0 0 20px 0;
   color: #333;
 }
+
+.sort-buttons {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.sort-buttons button {
+  padding: 8px 16px;
+  border: 1px solid #cc0000;
+  background: white;
+  color: #cc0000;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sort-buttons button.active {
+  background: #cc0000;
+  color: white;
+}

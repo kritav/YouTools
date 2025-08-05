@@ -36,6 +36,15 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
+// Add these storage keys
+const ANALYTICS_KEYS = {
+  watchHistory: 'youtools_watch_history',
+  categories: 'youtools_categories',
+  dailyStats: 'youtools_daily_stats',
+  channelStats: 'youtools_channel_stats'
+};
+
+// Modify the startTracking function
 function startTracking(tabId) {
   if (videoStates.has(tabId)) return;
 
@@ -49,18 +58,38 @@ function startTracking(tabId) {
       const data = {
         startTime: Date.now(),
         lastUpdate: Date.now(),
-        category: document.querySelector('ytd-video-primary-info-renderer')?.textContent || 'Unknown',
-        watchTime: 0
+        watchTime: 0,
+        speed: video.playbackRate,
+        channelName: document.querySelector('#channel-name')?.textContent?.trim() || 'Unknown Channel',
+        videoTitle: document.querySelector('.ytd-video-primary-info-renderer')?.textContent?.trim() || 'Unknown Video'
       };
+
+      // Update time saved calculation
+      function updateTimeSaved() {
+        const currentTime = Date.now();
+        const elapsed = (currentTime - data.lastUpdate) / 1000;
+        const timeSaved = elapsed * (data.speed - 1);
+        data.watchTime += elapsed;
+        data.timeSaved = (data.timeSaved || 0) + timeSaved;
+        data.lastUpdate = currentTime;
+      }
 
       video.addEventListener('play', () => {
         data.lastUpdate = Date.now();
+        data.speed = video.playbackRate;
       });
 
       video.addEventListener('pause', () => {
-        data.watchTime += (Date.now() - data.lastUpdate) / 1000;
-        data.lastUpdate = Date.now();
+        updateTimeSaved();
       });
+
+      video.addEventListener('ratechange', () => {
+        updateTimeSaved();
+        data.speed = video.playbackRate;
+      });
+
+      // Update even while playing
+      setInterval(updateTimeSaved, 1000);
 
       return data;
     }
@@ -68,6 +97,50 @@ function startTracking(tabId) {
     if (result?.result) {
       videoStates.set(tabId, result.result);
     }
+  });
+}
+
+// Add this function to update analytics
+async function updateTabAnalytics(tabId) {
+  const videoData = videoStates.get(tabId);
+  if (!videoData) return;
+
+  const today = new Date().toISOString().split('T')[0];
+  
+  chrome.storage.local.get(ANALYTICS_KEYS, (data) => {
+    // Update watch history
+    const watchHistory = data[ANALYTICS_KEYS.watchHistory] || [];
+    watchHistory.push({
+      timestamp: new Date().toISOString(),
+      watchTime: videoData.watchTime,
+      timeSaved: videoData.timeSaved,
+      speed: videoData.speed,
+      channelName: videoData.channelName,
+      videoTitle: videoData.videoTitle
+    });
+
+    // Update channel stats
+    const channelStats = data[ANALYTICS_KEYS.channelStats] || {};
+    if (!channelStats[videoData.channelName]) {
+      channelStats[videoData.channelName] = {
+        watchTime: 0,
+        videoCount: 0,
+        timeSaved: 0
+      };
+    }
+    channelStats[videoData.channelName].watchTime += videoData.watchTime;
+    channelStats[videoData.channelName].videoCount += 1;
+    channelStats[videoData.channelName].timeSaved += videoData.timeSaved;
+
+    // Update daily stats
+    const dailyStats = data[ANALYTICS_KEYS.dailyStats] || {};
+    dailyStats[today] = (dailyStats[today] || 0) + videoData.watchTime;
+
+    chrome.storage.local.set({
+      [ANALYTICS_KEYS.watchHistory]: watchHistory,
+      [ANALYTICS_KEYS.channelStats]: channelStats,
+      [ANALYTICS_KEYS.dailyStats]: dailyStats
+    });
   });
 }
 
