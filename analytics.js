@@ -207,7 +207,7 @@ function calculateAverageSpeed(history) {
   return totalSpeed / history.length;
 }
 
-// Add time formatting function
+//time formatting function
 function formatTime(seconds) {
   if (seconds < 60) return `${Math.round(seconds)}s`;
   if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
@@ -215,8 +215,18 @@ function formatTime(seconds) {
   return `${Math.round(seconds / 86400)}d`;
 }
 
-// Add function to calculate time saved
+//function to calculate time saved
 function calculateTimeSaved(history) {
   return history.reduce((total, entry) => 
     total + (entry.timeSaved || 0), 0);
+}
+
+// function filters daily states based on start date to current
+function filterDailyStats(dailyStats, startDate) {
+  return Object.entries(dailyStats)
+    .filter(([date]) => new Date(date) >= startDate)
+    .reduce((acc, [date, value]) => {
+      acc[date] = value;
+      return acc;
+    }, {});
 }
