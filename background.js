@@ -51,95 +51,155 @@ function startTracking(tabId) {
   chrome.scripting.executeScript({
     target: { tabId },
     function: () => {
-      const video = document.querySelector('video');
-      if (!video) return;
-
-      // Track video state
-      const data = {
+      let data = {
         startTime: Date.now(),
         lastUpdate: Date.now(),
         watchTime: 0,
-        speed: video.playbackRate,
-        channelName: document.querySelector('#channel-name')?.textContent?.trim() || 'Unknown Channel',
-        videoTitle: document.querySelector('.ytd-video-primary-info-renderer')?.textContent?.trim() || 'Unknown Video'
+        timeSaved: 0,
+        speed: 1,
+        channelName: '',
+        videoTitle: ''
       };
 
-      // Update time saved calculation
-      function updateTimeSaved() {
-        const currentTime = Date.now();
-        const elapsed = (currentTime - data.lastUpdate) / 1000;
-        const timeSaved = elapsed * (data.speed - 1);
-        data.watchTime += elapsed;
-        data.timeSaved = (data.timeSaved || 0) + timeSaved;
-        data.lastUpdate = currentTime;
+      function updateVideoData() {
+        data.channelName = document.querySelector('#channel-name')?.textContent?.trim() || 'Unknown Channel';
+        data.videoTitle = document.querySelector('.ytd-video-primary-info-renderer')?.textContent?.trim() || 'Unknown Video';
+        console.log('Updated video data:', data); // Debug log
       }
 
+      function updateTimeSaved() {
+        const video = document.querySelector('video');
+        if (!video || video.paused) return;
+        
+        const currentTime = Date.now();
+        const elapsed = (currentTime - data.lastUpdate) / 1000;
+        
+        // Update watch time and time saved
+        data.speed = video.playbackRate;
+        const timeSaved = elapsed * (data.speed - 1);
+        data.watchTime = (data.watchTime || 0) + elapsed;
+        data.timeSaved = (data.timeSaved || 0) + (timeSaved > 0 ? timeSaved : 0);
+        data.lastUpdate = currentTime;
+        
+        console.log('Time update:', {
+          elapsed,
+          watchTime: data.watchTime,
+          timeSaved: data.timeSaved,
+          speed: data.speed
+        });
+        
+        // Send updated data back to background script
+        chrome.runtime.sendMessage({
+          type: 'videoUpdate',
+          data: data
+        });
+      }
+
+      // Initial setup
+      const video = document.querySelector('video');
+      if (!video) return null;
+
+      updateVideoData();
+
+      // Event listeners
       video.addEventListener('play', () => {
+        console.log('Video played');
         data.lastUpdate = Date.now();
         data.speed = video.playbackRate;
       });
 
       video.addEventListener('pause', () => {
+        console.log('Video paused');
         updateTimeSaved();
       });
 
       video.addEventListener('ratechange', () => {
+        console.log('Playback rate changed:', video.playbackRate);
         updateTimeSaved();
-        data.speed = video.playbackRate;
       });
 
-      // Update even while playing
-      setInterval(updateTimeSaved, 1000);
+      // Regular updates
+      const updateInterval = setInterval(updateTimeSaved, 1000);
+      
+      // Cleanup on navigation
+      window.addEventListener('beforeunload', () => {
+        clearInterval(updateInterval);
+        updateTimeSaved();
+      });
 
       return data;
     }
   }).then(([result]) => {
     if (result?.result) {
+      console.log('Started tracking for tab:', tabId, result.result); // Debug log
       videoStates.set(tabId, result.result);
     }
   });
 }
 
 // Add this function to update analytics
+// Listen for video updates from content script
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (message.type === 'videoUpdate' && sender.tab) {
+    console.log('Received video update:', message.data); // Debug log
+    videoStates.set(sender.tab.id, message.data);
+  }
+});
+
 async function updateTabAnalytics(tabId) {
   const videoData = videoStates.get(tabId);
-  if (!videoData) return;
+  if (!videoData || !videoData.watchTime) return;
+
+  console.log('Updating analytics for tab:', tabId, videoData); // Debug log
 
   const today = new Date().toISOString().split('T')[0];
   
   chrome.storage.local.get(ANALYTICS_KEYS, (data) => {
     // Update watch history
     const watchHistory = data[ANALYTICS_KEYS.watchHistory] || [];
-    watchHistory.push({
+    const entry = {
       timestamp: new Date().toISOString(),
-      watchTime: videoData.watchTime,
-      timeSaved: videoData.timeSaved,
-      speed: videoData.speed,
-      channelName: videoData.channelName,
-      videoTitle: videoData.videoTitle
-    });
+      watchTime: Math.round(videoData.watchTime || 0),
+      timeSaved: Math.round(videoData.timeSaved || 0),
+      speed: videoData.speed || 1,
+      channelName: videoData.channelName || 'Unknown Channel',
+      videoTitle: videoData.videoTitle || 'Unknown Video'
+    };
+    console.log('Adding watch history entry:', entry);
+    watchHistory.push(entry);
 
     // Update channel stats
     const channelStats = data[ANALYTICS_KEYS.channelStats] || {};
-    if (!channelStats[videoData.channelName]) {
-      channelStats[videoData.channelName] = {
+    const channelName = videoData.channelName || 'Unknown Channel';
+    if (!channelStats[channelName]) {
+      channelStats[channelName] = {
         watchTime: 0,
         videoCount: 0,
         timeSaved: 0
       };
     }
-    channelStats[videoData.channelName].watchTime += videoData.watchTime;
-    channelStats[videoData.channelName].videoCount += 1;
-    channelStats[videoData.channelName].timeSaved += videoData.timeSaved;
+    channelStats[channelName].watchTime += Math.round(videoData.watchTime || 0);
+    channelStats[channelName].videoCount += 1;
+    channelStats[channelName].timeSaved += Math.round(videoData.timeSaved || 0);
 
     // Update daily stats
     const dailyStats = data[ANALYTICS_KEYS.dailyStats] || {};
     dailyStats[today] = (dailyStats[today] || 0) + videoData.watchTime;
 
-    chrome.storage.local.set({
+    const updates = {
       [ANALYTICS_KEYS.watchHistory]: watchHistory,
       [ANALYTICS_KEYS.channelStats]: channelStats,
       [ANALYTICS_KEYS.dailyStats]: dailyStats
+    };
+
+    console.log('Saving analytics data:', updates); // Debug log
+
+    chrome.storage.local.set(updates, () => {
+      if (chrome.runtime.lastError) {
+        console.error('Error saving analytics:', chrome.runtime.lastError);
+      } else {
+        console.log('Successfully saved analytics data');
+      }
     });
   });
 }

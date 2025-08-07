@@ -69,7 +69,8 @@ function filterDataByPeriod(data, period) {
     watchHistory: (data[ANALYTICS_KEYS.watchHistory] || [])
       .filter(entry => new Date(entry.timestamp) >= startDate),
     categories: data[ANALYTICS_KEYS.categories] || {},
-    dailyStats: filterDailyStats(data[ANALYTICS_KEYS.dailyStats] || {}, startDate)
+    dailyStats: filterDailyStats(data[ANALYTICS_KEYS.dailyStats] || {}, startDate),
+    channelStats: data[ANALYTICS_KEYS.channelStats] || {}
   };
 }
 
