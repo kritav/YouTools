@@ -99,6 +99,13 @@ function updateStats(data) {
     `${avgSpeed.toFixed(1)}x`;
 }
 
+// Store chart instances
+let charts = {
+  category: null,
+  timeline: null,
+  channel: null
+};
+
 function updateCharts(data) {
   updateCategoryChart(data.categories);
   updateTimelineChart(data.dailyStats);
@@ -107,10 +114,16 @@ function updateCharts(data) {
 
 function updateCategoryChart(categories) {
   const ctx = document.getElementById('categoryChart');
+  
+  // Destroy existing chart if it exists
+  if (charts.category) {
+    charts.category.destroy();
+  }
+  
   const sortedCategories = Object.entries(categories)
     .sort((a, b) => b[1] - a[1]);
 
-  new Chart(ctx, {
+  charts.category = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: sortedCategories.map(([cat]) => cat),
@@ -132,9 +145,15 @@ function updateCategoryChart(categories) {
 
 function updateTimelineChart(dailyStats) {
   const ctx = document.getElementById('timelineChart');
+  
+  // Destroy existing chart if it exists
+  if (charts.timeline) {
+    charts.timeline.destroy();
+  }
+  
   const dates = Object.keys(dailyStats).sort();
   
-  new Chart(ctx, {
+  charts.timeline = new Chart(ctx, {
     type: 'line',
     data: {
       labels: dates.map(date => new Date(date).toLocaleDateString()),
@@ -162,11 +181,17 @@ function updateTimelineChart(dailyStats) {
 
 function updateChannelChart(data) {
   const ctx = document.getElementById('channelChart');
+  
+  // Destroy existing chart if it exists
+  if (charts.channel) {
+    charts.channel.destroy();
+  }
+  
   const channelData = Object.entries(data.channelStats || {})
     .sort((a, b) => b[1][currentSort] - a[1][currentSort])
     .slice(0, 10); // Show top 10 channels
 
-  new Chart(ctx, {
+  charts.channel = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: channelData.map(([channel]) => channel),
