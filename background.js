@@ -46,7 +46,18 @@ const ANALYTICS_KEYS = {
 
 // Modify the startTracking function
 function startTracking(tabId) {
-  if (videoStates.has(tabId)) return;
+  if (videoStates.has(tabId)) {
+    // If we're already tracking this tab, just update the video data
+    chrome.scripting.executeScript({
+      target: { tabId },
+      function: () => {
+        if (typeof updateVideoData === 'function') {
+          updateVideoData();
+        }
+      }
+    });
+    return;
+  }
 
   chrome.scripting.executeScript({
     target: { tabId },
@@ -60,44 +71,60 @@ function startTracking(tabId) {
         channelName: '',
         videoTitle: '',
         category: 'Uncategorized',
-        isNewVideo: true  // Flag to track if this is a new video
+        videoId: location.pathname.split('/').pop() // Store video ID
       };
 
-      function updateVideoData() {
-        // Get channel name - trying multiple selectors
-        const channelSelectors = [
-          'ytd-video-owner-renderer #channel-name .yt-formatted-string',
-          '#channel-name .ytd-channel-name',
-          '#owner #channel-name'
-        ];
-        
-        for (const selector of channelSelectors) {
-          const channelElement = document.querySelector(selector);
-          if (channelElement?.textContent?.trim()) {
-            data.channelName = channelElement.textContent.trim();
-            break;
+      async function updateVideoData() {
+        try {
+          // Get channel name
+          const channelSelectors = [
+            '#owner-text a.yt-formatted-string', // Main video page channel link
+            '#channel-name a.yt-formatted-string', // Alternative channel link
+            '#upload-info a.yt-formatted-string' // Another possible location
+          ];
+          
+          for (const selector of channelSelectors) {
+            const channelElement = document.querySelector(selector);
+            if (channelElement?.textContent?.trim()) {
+              data.channelName = channelElement.textContent.trim();
+              console.log('Found channel name:', data.channelName);
+              break;
+            }
           }
-        }
-        
-        // Get video title
-        const titleSelectors = [
-          '.ytd-video-primary-info-renderer h1.title',
-          'h1.title'
-        ];
-        
-        for (const selector of titleSelectors) {
-          const titleElement = document.querySelector(selector);
+          
+          // Get video title
+          const titleElement = document.querySelector('#title h1.title');
           if (titleElement?.textContent?.trim()) {
             data.videoTitle = titleElement.textContent.trim();
-            break;
+            console.log('Found video title:', data.videoTitle);
           }
-        }
 
-        // Get video category
-        const categoryElement = document.querySelector('ytd-metadata-row-container-renderer yt-formatted-string:has(+ a[href*="browse_ajax?ctoken="])');
-        data.category = categoryElement?.textContent?.trim() || 'Uncategorized';
+          // Get video category
+          const rows = document.querySelectorAll('ytd-metadata-row-renderer');
+          for (const row of rows) {
+            const title = row.querySelector('#title')?.textContent?.trim();
+            const content = row.querySelector('#content')?.textContent?.trim();
+            if (title === 'Category') {
+              data.category = content || 'Uncategorized';
+              console.log('Found category:', data.category);
+              break;
+            }
+          }
+
+          // If no channel name was found, try one more time after a delay
+          if (!data.channelName) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const lastResortChannel = document.querySelector('#top-row ytd-channel-name yt-formatted-string');
+            if (lastResortChannel?.textContent?.trim()) {
+              data.channelName = lastResortChannel.textContent.trim();
+              console.log('Found channel name (delayed):', data.channelName);
+            }
+          }
+        } catch (error) {
+          console.error('Error updating video data:', error);
+        }
         
-        console.log('Updated video data:', data); // Debug log
+        console.log('Final video data:', data);
       }
 
       function updateTimeSaved() {
@@ -190,6 +217,13 @@ async function updateTabAnalytics(tabId) {
   chrome.storage.local.get(ANALYTICS_KEYS, (data) => {
     // Update watch history
     const watchHistory = data[ANALYTICS_KEYS.watchHistory] || [];
+    
+    // Check if this video is already in history
+    const existingEntry = watchHistory.find(entry => 
+      entry.videoTitle === videoData.videoTitle && 
+      entry.channelName === videoData.channelName
+    );
+    
     const entry = {
       timestamp: new Date().toISOString(),
       watchTime: Math.round(videoData.watchTime || 0),
@@ -199,8 +233,16 @@ async function updateTabAnalytics(tabId) {
       videoTitle: videoData.videoTitle || 'Unknown Video',
       category: videoData.category || 'Uncategorized'
     };
-    console.log('Adding watch history entry:', entry);
-    watchHistory.push(entry);
+    
+    if (existingEntry) {
+      // Update existing entry
+      existingEntry.watchTime += entry.watchTime;
+      existingEntry.timeSaved += entry.timeSaved;
+      existingEntry.timestamp = entry.timestamp;
+      console.log('Updating existing entry:', existingEntry);
+    } else {
+      console.log('Adding new watch history entry:', entry);
+      watchHistory.push(entry);
 
     // Update channel stats
     const channelStats = data[ANALYTICS_KEYS.channelStats] || {};
@@ -213,10 +255,9 @@ async function updateTabAnalytics(tabId) {
       };
     }
     
-    // Only increment video count if this is a new video
-    if (videoData.isNewVideo) {
+    // Update video count only for new entries
+    if (!existingEntry) {
       channelStats[channelName].videoCount += 1;
-      videoData.isNewVideo = false; // Reset the flag
     }
     
     channelStats[channelName].watchTime += Math.round(videoData.watchTime || 0);
