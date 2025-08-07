@@ -2,7 +2,8 @@
 const ANALYTICS_KEYS = {
   watchHistory: 'youtools_watch_history',
   categories: 'youtools_categories',
-  dailyStats: 'youtools_daily_stats'
+  dailyStats: 'youtools_daily_stats',
+  channelStats: 'youtools_channel_stats'
 };
 
 let currentPeriod = 'day';
@@ -46,18 +47,16 @@ async function loadAnalytics(period) {
 
 async function getAnalyticsData(period) {
   return new Promise(resolve => {
-    chrome.storage.local.get(null, data => {
-      console.log('All storage data:', data); // Debug line to see all stored data
-      chrome.storage.local.get([
-        ANALYTICS_KEYS.watchHistory,
-        ANALYTICS_KEYS.categories,
-        ANALYTICS_KEYS.dailyStats
-      ], data => {
-        console.log('Retrieved analytics data:', data); // Debug line
-        const filtered = filterDataByPeriod(data, period);
-        console.log('Filtered data:', filtered); // Debug line
-        resolve(filtered);
-      });
+    chrome.storage.local.get([
+      ANALYTICS_KEYS.watchHistory,
+      ANALYTICS_KEYS.categories,
+      ANALYTICS_KEYS.dailyStats,
+      ANALYTICS_KEYS.channelStats
+    ], data => {
+      console.log('Retrieved analytics data:', data); // Debug line
+      const filtered = filterDataByPeriod(data, period);
+      console.log('Filtered data:', filtered); // Debug line
+      resolve(filtered);
     });
   });
 }

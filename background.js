@@ -180,6 +180,13 @@ chrome.tabs.onActivated.addListener(activeInfo => {
 
 // Clean up storage when tab is closed
 chrome.tabs.onRemoved.addListener((tabId) => {
+  // First update analytics one last time if this was a tracked tab
+  if (videoStates.has(tabId)) {
+    updateTabAnalytics(tabId);
+    videoStates.delete(tabId);
+  }
+
+  // Then clean up tab-specific storage
   const storageKeys = [
     `youtools_speed_${tabId}`,
     `youtools_volume_${tabId}`,
