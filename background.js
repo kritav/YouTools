@@ -58,12 +58,45 @@ function startTracking(tabId) {
         timeSaved: 0,
         speed: 1,
         channelName: '',
-        videoTitle: ''
+        videoTitle: '',
+        category: 'Uncategorized',
+        isNewVideo: true  // Flag to track if this is a new video
       };
 
       function updateVideoData() {
-        data.channelName = document.querySelector('#channel-name')?.textContent?.trim() || 'Unknown Channel';
-        data.videoTitle = document.querySelector('.ytd-video-primary-info-renderer')?.textContent?.trim() || 'Unknown Video';
+        // Get channel name - trying multiple selectors
+        const channelSelectors = [
+          'ytd-video-owner-renderer #channel-name .yt-formatted-string',
+          '#channel-name .ytd-channel-name',
+          '#owner #channel-name'
+        ];
+        
+        for (const selector of channelSelectors) {
+          const channelElement = document.querySelector(selector);
+          if (channelElement?.textContent?.trim()) {
+            data.channelName = channelElement.textContent.trim();
+            break;
+          }
+        }
+        
+        // Get video title
+        const titleSelectors = [
+          '.ytd-video-primary-info-renderer h1.title',
+          'h1.title'
+        ];
+        
+        for (const selector of titleSelectors) {
+          const titleElement = document.querySelector(selector);
+          if (titleElement?.textContent?.trim()) {
+            data.videoTitle = titleElement.textContent.trim();
+            break;
+          }
+        }
+
+        // Get video category
+        const categoryElement = document.querySelector('ytd-metadata-row-container-renderer yt-formatted-string:has(+ a[href*="browse_ajax?ctoken="])');
+        data.category = categoryElement?.textContent?.trim() || 'Uncategorized';
+        
         console.log('Updated video data:', data); // Debug log
       }
 
@@ -163,7 +196,8 @@ async function updateTabAnalytics(tabId) {
       timeSaved: Math.round(videoData.timeSaved || 0),
       speed: videoData.speed || 1,
       channelName: videoData.channelName || 'Unknown Channel',
-      videoTitle: videoData.videoTitle || 'Unknown Video'
+      videoTitle: videoData.videoTitle || 'Unknown Video',
+      category: videoData.category || 'Uncategorized'
     };
     console.log('Adding watch history entry:', entry);
     watchHistory.push(entry);
@@ -178,9 +212,20 @@ async function updateTabAnalytics(tabId) {
         timeSaved: 0
       };
     }
+    
+    // Only increment video count if this is a new video
+    if (videoData.isNewVideo) {
+      channelStats[channelName].videoCount += 1;
+      videoData.isNewVideo = false; // Reset the flag
+    }
+    
     channelStats[channelName].watchTime += Math.round(videoData.watchTime || 0);
-    channelStats[channelName].videoCount += 1;
     channelStats[channelName].timeSaved += Math.round(videoData.timeSaved || 0);
+
+    // Update categories
+    const categories = data[ANALYTICS_KEYS.categories] || {};
+    const category = videoData.category || 'Uncategorized';
+    categories[category] = (categories[category] || 0) + Math.round(videoData.watchTime || 0);
 
     // Update daily stats
     const dailyStats = data[ANALYTICS_KEYS.dailyStats] || {};
@@ -189,6 +234,7 @@ async function updateTabAnalytics(tabId) {
     const updates = {
       [ANALYTICS_KEYS.watchHistory]: watchHistory,
       [ANALYTICS_KEYS.channelStats]: channelStats,
+      [ANALYTICS_KEYS.categories]: categories,
       [ANALYTICS_KEYS.dailyStats]: dailyStats
     };
 
